@@ -1,23 +1,17 @@
 library(shiny)
-library(twitteR)
-library(wordcloud)
-library(tm)
-shinyServer(function (input, output) {
-  rawData = reactive(function(){
-    tweets = searchTwitter(input$term, n=input$count, lang=input$lang)
-    tweets = twListToDF(tweets)
-  })
-  output$table = renderTable(function () {
-    head(rawData()[1],n=input$obs)
-  })
-  output$wordcl = renderPlot(function(){
-    tw.text = enc2native(rawData()$text)
-    tw.text = tolower(tw.text)
-    tw.text = removeWords(tw.text,c(stopwords(input$lang),"rt"))
-    tw.text = removePunctuation(tw.text,TRUE)
-    tw.text = unlist(strsplit(tw.text," "))
-    word = sort(table(tw.text),TRUE)
-    wordc = head(word,n=100)
-    wordcloud(names(wordc),wordc,random.color=TRUE,colors=rainbow(10),scale=c(15,2))
-  })
-})
+shinyUI(fluidPage(
+  headerPanel("Twitter Sentiment Analysis"),
+  sidebarPanel( textInput("term", "Enter a term to search", ""),
+                sliderInput("count",
+                            label = "Number of tweets to load:",
+                            min = 0, max = 200, value = 0),
+                numericInput("obs", "Number of tweets you want to view:", 5),
+                selectInput("lang","Select the language",
+                            c("English"="en"
+                              ), selected = "en"),
+                submitButton(text="Run")),
+  mainPanel(
+    h4("Last few Tweets"),
+    tableOutput("table"),
+    plotOutput("wordcl"))
+))
